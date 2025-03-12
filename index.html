@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情侶問答遊戲</title>
+    <style>
+        body {
+            font-family: "Arial", sans-serif;
+            text-align: center;
+            background-color: #ffebf0;
+            color: #d63384;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 18px;
+            color: white;
+            background: #ff69b4;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #e05297;
+        }
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        #answer {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>情侶問答遊戲</h1>
+    <p>選擇一種模式開始遊戲！</p>
+    <button onclick="startGame('memory')">回憶挑戰</button>
+    <button onclick="startGame('choice')">兩難選擇</button>
+    <button onclick="startGame('sync')">默契挑戰</button>
+</div>
+
+<div id="gameArea" class="container" style="display:none;">
+    <h2 id="question">題目顯示區</h2>
+    
+    <div id="inputArea">
+        <input type="text" id="playerAnswer" placeholder="請輸入你的答案">
+        <button onclick="submitAnswer()">確定</button>
+    </div>
+    
+    <div id="choiceArea" style="display:none;">
+        <button onclick="chooseOption(1)">選項 A</button>
+        <button onclick="chooseOption(2)">選項 B</button>
+    </div>
+    
+    <button id="showAnswer" onclick="revealAnswer()" style="display:none;">公布答案</button>
+    <button id="nextQuestion" onclick="nextQuestion()" style="display:none;">下一題</button>
+    <button onclick="exportAnswers()">結束遊戲</button>
+</div>
+
+<script>
+    let gameMode = "";
+    let questions = [];
+    let currentQuestion = 0;
+    let player1Answer = "";
+    let player2Answer = "";
+    let playerTurn = 1;
+    let answerLog = [];
+    let player1Choice = "";
+    let player2Choice = "";
+
+    
+const memoryQuestions = [
+    "我們正式交往的日期是？", "我們第一次約會的地點是哪裡？", "誰先說「我喜歡你」？", "我們第一次一起看的電影是？",
+    "我們第一次見面的日期是？", "我們第一次約會的地點是？", "第一次一起看的電影是？", "第一次一起吃的餐廳是？",
+    "第一次一起搭乘的交通工具是？", "我們第一次一起旅行的地方是？", "我送給對方的第一份禮物是？",
+    "對方送我的第一份禮物是？", "第一次吵架的原因是什麼？", "第一次一起養的寵物是什麼？", "我們第一次一起過的節日是？",
+    "我們最常一起去的餐廳是？", "兩人第一次牽手的地點是？", "兩人第一次擁抱的地點是？", "第一次說「我愛你」的人是誰？",
+    "我們第一次一起拍的大頭貼是在哪裡？", "兩人第一次搭飛機是去哪裡？", "兩人第一次去遊樂園是哪裡？",
+    "兩人第一次看演唱會是哪位歌手？", "兩人第一次一起做飯煮的是什麼？", "我們曾經最浪漫的一次約會是？",
+    "兩人一起最晚熬夜的原因是什麼？", "兩人最常吃的消夜是什麼？", "兩人最愛的甜點是哪一種？",
+    "兩人最愛的飲料是哪一種？", "兩人曾經一起參加過的活動有哪些？", "兩人最喜歡的紀念日是哪一天？",
+    "兩人曾經一起最爆笑的回憶是什麼？", "兩人第一次一起搭公車去哪裡？", "兩人曾經最感人的時刻是什麼？",
+    "兩人曾經最瘋狂的舉動是什麼？", "兩人第一次一起過生日是在哪裡？", "兩人第一次一起過聖誕節是怎麼度過的？",
+    "兩人第一次一起參加婚禮是誰的？", "兩人曾經最難忘的一次驚喜是什麼？", "兩人一起看過最恐怖的電影是什麼？",
+    "兩人曾經玩過最喜歡的桌遊是什麼？", "兩人最常一起點的外送是哪一家？", "兩人最常去的公園或散步地點是哪裡？",
+    "兩人曾經一起買過最貴的東西是什麼？", "兩人曾經為了什麼小事吵架？", "兩人曾經一起完成的最有成就感的事是什麼？",
+    "兩人曾經因為什麼事情笑到肚子痛？", "兩人第一次一起唱 KTV 是在哪裡？", "兩人曾經為對方做過最浪漫的事是什麼？",
+    "兩人第一次一起買的情侶單品是什麼？", "兩人曾經一起經歷過最驚險的事情是什麼？", "兩人最喜歡的共同習慣是什麼？",
+    "兩人曾經最甜蜜的一次擁抱是什麼時候？", "兩人曾經在哪個場合對彼此最害羞？", "兩人曾經為彼此做過最瘋狂的事是什麼？",
+    "兩人第一次一起熬夜是為了什麼？", "兩人曾經最尷尬的一次經歷是什麼？", "兩人最常一起討論的話題是什麼？",
+    "兩人曾經一起聽過最多次的歌是什麼？", "兩人第一次去海邊是哪裡？", "兩人第一次住飯店是哪裡？",
+    "兩人曾經最無聊的一次約會是什麼？", "兩人第一次做手工或 DIY 是什麼？", "兩人曾經一起養過的植物是什麼？"
+];
+
+    
+const choiceQuestions = [
+    ["一輩子只能擁有擁抱", "一輩子只能擁有親吻"],
+    ["以後只能吃甜食", "以後只能吃辣食"],
+    ["去歐洲旅遊", "去日本旅遊"],
+    ["只能吃對方煮的飯但可能不好吃", "只能自己煮飯但不能吃外食"],
+    ["未來只能去山上約會", "只能去海邊約會"],
+    ["另一半每天對你唱歌", "每天對你跳舞"],
+    ["只能用對方的手機 1 年", "只能穿對方的衣服 1 年"],
+    ["出門只能穿情侶裝", "永遠不能穿情侶裝"],
+    ["一輩子不能看到對方哭", "一輩子不能看到對方笑"],
+    ["每次打噴嚏都要親對方一下", "每次笑都要摸對方的頭"],
+    ["只能一直牽手但不能擁抱", "只能一直擁抱但不能牽手"],
+    ["只能送對方手寫信", "只能用語音訊息"],
+    ["另一半每天都要抱著你睡", "每天都要牽著手睡"],
+    ["只能每天說「我愛你」10 次", "只能每個月說 1 次"],
+    ["只能和對方一起吃飯但不能講話", "只能講話但不能一起吃飯"],
+    ["永遠只能對方幫你點餐", "永遠只能自己吃飯"],
+    ["和對方交換靈魂 1 天", "和對方交換手機 1 天"],
+    ["只能親對方額頭", "只能親對方鼻子"],
+    ["只能過紀念日但不能過生日", "只能過生日但不能過紀念日"],
+    ["只能一起去健身房約會", "只能一起去圖書館約會"],
+    ["只能聽對方唱歌 1 小時", "只能聽對方講冷笑話 1 小時"],
+    ["另一半突然變得超級害羞", "突然變得超級主動"],
+    ["只能用對方的名字作為密碼", "只能用對方的生日作為密碼"],
+    ["只能一起養魚", "只能一起養鳥"],
+    ["一輩子每天穿同樣的情侶裝", "不能穿重複的衣服"],
+    ["另一半突然變成超級大明星", "變成超級富豪"],
+    ["只能每天傳訊息 3 次", "只能每天講電話 3 分鐘"],
+    ["一起去熱帶小島住 1 年", "一起去極地住 1 年"],
+    ["只能每天手牽手走路", "每天出門要互相背著走 10 分鐘"],
+    ["只能每天吃對方做的早餐", "只能每天吃對方做的晚餐"],
+    ["只能選擇對方的手機背景", "只能選擇對方的社群頭貼"],
+    ["只能選擇對方的髮型", "只能選擇對方的衣服"],
+    ["一起經歷 10 次大驚喜", "一起經歷 1 次超級浪漫的事件"],
+    ["每天要對方給你一個驚喜", "每天要對方寫一張紙條給你"],
+    ["只能一起穿運動服約會", "只能一起穿正裝約會"],
+    ["只能叫對方全名", "只能叫對方綽號"],
+    ["只能每天講 10 句話", "每天只能打 10 則訊息"],
+    ["一輩子只能約會吃同一間餐廳", "一輩子不能重複去同一間餐廳"],
+    ["只能一起參加才藝比賽", "只能一起參加運動比賽"],
+    ["另一半只能用 baby 語跟你講話", "只能用超嚴肅語氣跟你講話"],
+    ["另一半每天都送你小禮物", "每天都為你寫情書"],
+    ["只能聽對方哼歌入睡", "只能聽對方說故事入睡"],
+    ["只能一起做瑜珈", "只能一起跳舞"],
+    ["只能用愛心表情和對方聊天", "只能用句號和對方聊天"],
+    ["只能一起玩桌遊", "只能一起打電動"],
+    ["只能一起坐公車", "只能一起騎腳踏車"],
+    ["只能對方幫你挑衣服", "只能對方幫你剪頭髮"],
+    ["只能每天早上 6 點約會", "每天晚上 10 點後才能約會"],
+    ["只能互相寫信溝通", "只能互相錄音溝通"],
+    ["只能一起爬山", "只能一起潛水"],
+    ["只能送對方手寫卡片", "只能送對方 DIY 禮物"],
+    ["只能用餐廳約會", "只能用野餐約會"],
+    ["只能一起唱情歌", "只能一起拍甜蜜影片"],
+    ["只能一起種花", "只能一起種菜"],
+    ["只能用對方的枕頭睡覺", "只能穿對方的拖鞋"],
+    ["只能一起聽對方最愛的音樂", "只能一起看對方最愛的電影"],
+    ["只能每天互相說早安", "只能每天互相說晚安"],
+    ["只能一起玩交換禮物", "只能一起玩密室逃脫"],
+    ["只能一直搭飛機旅遊", "只能一直搭火車旅遊"],
+    ["只能對方幫你做早餐", "只能對方幫你選衣服"],
+    ["只能一起看日出", "只能一起看星星"],
+    ["只能每天給對方寫一句情話", "只能每天給對方畫一幅畫"],
+    ["只能擁抱對方 3 秒", "只能親對方 3 秒"]
+];
+
+    
+const syncQuestions = [
+    "我們最常去的餐廳是？", "我們的默契最好的一件事是？", "兩個人一起最愛的電影是？", "最適合我們的約會地點？",
+    "兩人最愛聽的一首歌？", "另一半的招牌表情是？", "誰是我們感情裡比較黏的那個？", "如果我們一起開店，會開什麼店？",
+    "我們最想一起去的國家是？", "如果我們是動物，彼此最像哪種動物？", "如果要一起去參加一個節目，會是什麼類型？",
+    "彼此最愛對方的穿搭風格？", "我們第一次說「我愛你」的地點是？", "兩人最愛的共同興趣是？",
+    "另一半最常掛在嘴邊的一句話？", "最適合我們的情侶綽號是？", "彼此最不能接受對方做的事是？",
+    "如果今天只能吃一種食物，會選什麼？", "如果我們要養一隻寵物，會是什麼動物？", "彼此覺得最適合的求婚地點是？",
+    "我們最常去的咖啡廳是？", "兩人最常看的 YouTube 頻道是？", "兩人第一次合照的地點是？",
+    "我們最愛的一次旅行是去哪裡？", "兩人最愛的宵夜是什麼？", "兩人最愛的運動是什麼？",
+    "兩人最常一起做的手作或 DIY 是什麼？", "兩人最想一起挑戰的戶外活動是？", "兩人最常一起玩的手機遊戲是？",
+    "兩人曾經最爆笑的經歷是什麼？", "我們第一次養的寵物是什麼？", "兩人最常唱的 KTV 合唱曲是？",
+    "我們最常點的外送餐點是？", "兩人最喜歡的約會地點是？", "兩人最愛的遊樂園設施是？",
+    "兩人曾經最爛的一次約會經驗是？", "兩人最愛的飲品店是哪一家？", "兩人曾經最累的一次旅行是哪裡？",
+    "兩人曾經最感動的一次驚喜是什麼？", "兩人最喜歡的共同回憶是哪一次？", "另一半最怕的昆蟲是？",
+    "另一半最喜歡的動物是？", "另一半的手機型號是？", "另一半最愛的甜點是哪種？",
+    "另一半最常說的口頭禪是？", "另一半最愛的一件衣服是什麼顏色？", "另一半最喜歡的影視作品是？",
+    "另一半的夢想職業是？", "另一半的早餐最常吃什麼？", "另一半最喜歡的運動是哪種？",
+    "我們未來最想一起去的國家是？", "我們未來最想養的寵物是？", "我們未來最想一起完成的夢想是？",
+    "我們未來的婚禮想在哪裡舉辦？", "我們未來最想住的城市是？", "我們未來最想一起投資的事業是？",
+    "我們未來最想挑戰的極限運動是？", "我們未來最想嘗試的料理是哪種？", "我們最想一起裝潢的房間風格是？",
+    "我們未來最想一起做的紀錄影片內容是？"
+];
+
+
+    function startGame(mode) {
+        gameMode = mode;
+        document.querySelector(".container").style.display = "none";
+        document.getElementById("gameArea").style.display = "block";
+
+        if (mode === "memory") {
+            questions = [...memoryQuestions].sort(() => 0.5 - Math.random());
+            document.getElementById("inputArea").style.display = "block";
+            document.getElementById("choiceArea").style.display = "none";
+        } else if (mode === "choice") {
+            questions = [...choiceQuestions].sort(() => 0.5 - Math.random());
+            document.getElementById("inputArea").style.display = "none";
+            document.getElementById("choiceArea").style.display = "block";
+        } else {
+            questions = [...syncQuestions].sort(() => 0.5 - Math.random());
+            document.getElementById("inputArea").style.display = "none";
+            document.getElementById("choiceArea").style.display = "none";
+        }
+
+        currentQuestion = 0;
+        playerTurn = 1;
+        answerLog = [];
+        showQuestion();
+    }
+
+    function showQuestion() {
+        if (currentQuestion < questions.length) {
+            if (gameMode === "choice") {
+                document.getElementById("question").innerText = `${questions[currentQuestion][0]} 或 ${questions[currentQuestion][1]}？`;
+            } else {
+                document.getElementById("question").innerText = questions[currentQuestion];
+            }
+            document.getElementById("nextQuestion").style.display = "none";
+            document.getElementById("showAnswer").style.display = gameMode === "memory" ? "none" : "block";
+        } else {
+            exportAnswers();
+        }
+    }
+
+    function submitAnswer() {
+        let answer = document.getElementById("playerAnswer").value.trim();
+        if (!answer) return;
+
+        if (gameMode === "memory") {
+            if (playerTurn === 1) {
+                player1Answer = answer;
+                playerTurn = 2;
+                document.getElementById("playerAnswer").value = "";
+            } else {
+                player2Answer = answer;
+                document.getElementById("showAnswer").style.display = "block";
+            }
+        }
+    }
+
+    function chooseOption(choice) {
+        if (playerTurn === 1) {
+            player1Choice = questions[currentQuestion][choice - 1];
+            playerTurn = 2;
+        } else {
+            player2Choice = questions[currentQuestion][choice - 1];
+            document.getElementById("showAnswer").style.display = "block";
+        }
+    }
+
+    function revealAnswer() {
+        if (gameMode === "memory") {
+            alert(`玩家1：${player1Answer}\n玩家2：${player2Answer}`);
+            answerLog.push(`${questions[currentQuestion]} - 玩家1: ${player1Answer}, 玩家2: ${player2Answer}`);
+        } else if (gameMode === "choice") {
+            alert(`玩家1 選擇：${player1Choice}\n玩家2 選擇：${player2Choice}`);
+            answerLog.push(`${questions[currentQuestion][0]} or ${questions[currentQuestion][1]} - 玩家1: ${player1Choice}, 玩家2: ${player2Choice}`);
+        }
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        currentQuestion++;
+        playerTurn = 1;
+        showQuestion();
+    }
+
+    function exportAnswers() {
+        let content = answerLog.join("\n");
+        let blob = new Blob([content], { type: "text/plain" });
+        let a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "情侶問答結果.txt";
+        a.click();
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
