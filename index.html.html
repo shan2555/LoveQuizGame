@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情侶問答遊戲</title>
+    <style>
+        body {
+            font-family: "Arial", sans-serif;
+            text-align: center;
+            background-color: #ffebf0;
+            color: #d63384;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 18px;
+            color: white;
+            background: #ff69b4;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #e05297;
+        }
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        #answer {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>情侶問答遊戲</h1>
+    <p>選擇一種模式開始遊戲！</p>
+    <button onclick="startGame('memory')">回憶挑戰</button>
+    <button onclick="startGame('choice')">兩難選擇</button>
+    <button onclick="startGame('sync')">默契挑戰</button>
+</div>
+
+<div id="gameArea" class="container" style="display:none;">
+    <h2 id="question">題目顯示區</h2>
+    
+    <div id="inputArea">
+        <input type="text" id="playerAnswer" placeholder="請輸入你的答案">
+        <button onclick="submitAnswer()">確定</button>
+    </div>
+    
+    <div id="choiceArea" style="display:none;">
+        <button onclick="chooseOption(1)">選項 A</button>
+        <button onclick="chooseOption(2)">選項 B</button>
+    </div>
+    
+    <button id="showAnswer" onclick="revealAnswer()" style="display:none;">公布答案</button>
+    <button id="nextQuestion" onclick="nextQuestion()" style="display:none;">下一題</button>
+    <button onclick="exportAnswers()">結束遊戲</button>
+</div>
+
+<script>
+    let gameMode = "";
+    let questions = [];
+    let currentQuestion = 0;
+    let player1Answer = "";
+    let player2Answer = "";
+    let playerTurn = 1;
+    let answerLog = [];
+    let player1Choice = "";
+    let player2Choice = "";
+
+    const memoryQuestions = [
+        "我們正式交往的日期是？", "我們第一次約會的地點是哪裡？", "誰先說「我喜歡你」？", "我們第一次一起看的電影是？"
+    ];
+    const choiceQuestions = [
+        ["一輩子只能擁有擁抱", "一輩子只能擁有親吻"],
+        ["以後只能吃甜食", "以後只能吃辣食"],
+        ["去歐洲旅遊", "去日本旅遊"]
+    ];
+    const syncQuestions = [
+        "我們最常去的餐廳是？", "我們的默契最好的一件事是？", "兩個人一起最愛的電影是？", "最適合我們的約會地點？",
+        "兩人最愛聽的一首歌？", "另一半的招牌表情是？", "誰是我們感情裡比較黏的那個？", "如果我們一起開店，會開什麼店？",
+        "我們最想一起去的國家是？", "如果我們是動物，彼此最像哪種動物？", "如果要一起去參加一個節目，會是什麼類型？",
+        "彼此最愛對方的穿搭風格？", "我們第一次說「我愛你」的地點是？", "兩人最愛的共同興趣是？",
+        "另一半最常掛在嘴邊的一句話？", "最適合我們的情侶綽號是？", "彼此最不能接受對方做的事是？",
+        "如果今天只能吃一種食物，會選什麼？", "如果我們要養一隻寵物，會是什麼動物？", "彼此覺得最適合的求婚地點是？"
+    ];
+
+    function startGame(mode) {
+        gameMode = mode;
+        document.querySelector(".container").style.display = "none";
+        document.getElementById("gameArea").style.display = "block";
+
+        if (mode === "memory") {
+            questions = [...memoryQuestions].sort(() => 0.5 - Math.random());
+            document.getElementById("inputArea").style.display = "block";
+            document.getElementById("choiceArea").style.display = "none";
+        } else if (mode === "choice") {
+            questions = [...choiceQuestions].sort(() => 0.5 - Math.random());
+            document.getElementById("inputArea").style.display = "none";
+            document.getElementById("choiceArea").style.display = "block";
+        } else {
+            questions = [...syncQuestions].sort(() => 0.5 - Math.random());
+            document.getElementById("inputArea").style.display = "none";
+            document.getElementById("choiceArea").style.display = "none";
+        }
+
+        currentQuestion = 0;
+        playerTurn = 1;
+        answerLog = [];
+        showQuestion();
+    }
+
+    function showQuestion() {
+        if (currentQuestion < questions.length) {
+            if (gameMode === "choice") {
+                document.getElementById("question").innerText = `${questions[currentQuestion][0]} 或 ${questions[currentQuestion][1]}？`;
+            } else {
+                document.getElementById("question").innerText = questions[currentQuestion];
+            }
+            document.getElementById("nextQuestion").style.display = "none";
+            document.getElementById("showAnswer").style.display = gameMode === "memory" ? "none" : "block";
+        } else {
+            exportAnswers();
+        }
+    }
+
+    function submitAnswer() {
+        let answer = document.getElementById("playerAnswer").value.trim();
+        if (!answer) return;
+
+        if (gameMode === "memory") {
+            if (playerTurn === 1) {
+                player1Answer = answer;
+                playerTurn = 2;
+                document.getElementById("playerAnswer").value = "";
+            } else {
+                player2Answer = answer;
+                document.getElementById("showAnswer").style.display = "block";
+            }
+        }
+    }
+
+    function chooseOption(choice) {
+        if (playerTurn === 1) {
+            player1Choice = questions[currentQuestion][choice - 1];
+            playerTurn = 2;
+        } else {
+            player2Choice = questions[currentQuestion][choice - 1];
+            document.getElementById("showAnswer").style.display = "block";
+        }
+    }
+
+    function revealAnswer() {
+        if (gameMode === "memory") {
+            alert(`玩家1：${player1Answer}\n玩家2：${player2Answer}`);
+            answerLog.push(`${questions[currentQuestion]} - 玩家1: ${player1Answer}, 玩家2: ${player2Answer}`);
+        } else if (gameMode === "choice") {
+            alert(`玩家1 選擇：${player1Choice}\n玩家2 選擇：${player2Choice}`);
+            answerLog.push(`${questions[currentQuestion][0]} or ${questions[currentQuestion][1]} - 玩家1: ${player1Choice}, 玩家2: ${player2Choice}`);
+        }
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        currentQuestion++;
+        playerTurn = 1;
+        showQuestion();
+    }
+
+    function exportAnswers() {
+        let content = answerLog.join("\n");
+        let blob = new Blob([content], { type: "text/plain" });
+        let a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "情侶問答結果.txt";
+        a.click();
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
