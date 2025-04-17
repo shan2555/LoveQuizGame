@@ -1,0 +1,155 @@
+# 修正註解格式並重新儲存整合 HTML 檔案
+integrated_html = """
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>情侶互動遊戲大集合</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fff0f5;
+      color: #333;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #e06287;
+    }
+    .mode-buttons, .question-box {
+      margin: 20px auto;
+    }
+    button {
+      background-color: #ff8fb1;
+      border: none;
+      padding: 10px 20px;
+      margin: 10px;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ff6d96;
+    }
+    .box {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 500px;
+      margin: 0 auto 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+<h1>情侶互動遊戲大集合</h1>
+
+<div class="mode-buttons">
+  <button onclick="switchMode('choice')">兩難選擇</button>
+  <button onclick="switchMode('mouqi')">默契問答</button>
+</div>
+
+<!-- 共用顯示區塊 -->
+<div class="box">
+  <div id="gameTitle">請選擇遊戲模式</div>
+  <div id="gameContent"></div>
+</div>
+
+<!-- 功能按鈕 -->
+<div id="actionButtons" style="display:none;">
+  <button onclick="next()">下一題</button>
+  <button onclick="reset()">重置</button>
+</div>
+
+<script>
+const choiceQuestions = [
+  ["永遠不吃冰淇淋", "永遠不能喝奶茶"],
+  ["只能和情人一起旅遊", "只能和朋友一起旅遊"],
+  ["一年只能約會一次", "每次約會都要直播"],
+  ["只能吃鹹食", "只能吃甜食"],
+  ["每天都要傳100則訊息", "永遠不能講電話"],
+  ["情人節只能吃泡麵", "生日只能吃便利商店便當"],
+  ["只能和對方講土味情話", "不能對對方說我愛你"],
+  ["一輩子只能去海邊玩", "一輩子只能去山上玩"],
+  ["旅遊只能帶1件衣服", "旅遊不能洗澡"],
+  ["約會只能去你最討厭的地方", "約會只能跟對方媽媽一起"],
+  ["一週不能見面", "每天都要見面三小時"],
+  ["吃飯一定要對方餵你", "走路一定要牽手繞三圈"],
+  ["旅遊只能拍照不能發IG", "旅遊只能發限動不能拍照"],
+  ["一輩子都要叫對方寶貝", "一輩子不能叫對方名字"],
+  ["只能睡同一張床但不能講話", "可以聊天但不能一起睡覺"],
+  ["只能穿情侶裝", "永遠不能穿一樣的顏色"],
+  ["看電影只能看對方最愛的類型", "吃飯只能吃對方最愛的食物"],
+  ["對方手機永遠都不能看", "你的手機對方可以隨時看"],
+  ["一年只有一次旅行機會", "每次旅行都不能住飯店"],
+  ["每次吵架都要寫道歉信", "每次吵架都要唱情歌和好"]
+];
+
+const mouqiQuestions = [
+  "對方最常說的一句口頭禪是什麼？",
+  "你們第一次約會去哪裡？",
+  "對方最怕的東西是什麼？",
+  "如果一起旅行，最想去的國家是？",
+  "對方最喜歡的飲料是什麼？",
+  "如果今天只能做一件事，你們會選擇什麼？",
+  "對方最常用的表情符號是？",
+  "對方的理想約會場景是？",
+  "你們最常一起做的事情是什麼？",
+  "對方最喜歡的甜點是？",
+  "未來想一起養什麼寵物？",
+  "在一起的紀念日是？",
+  "對方最常穿的顏色是什麼？",
+  "對方喜歡早起還是晚睡？"
+];
+
+let currentMode = "";
+let currentOptions = [];
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById("actionButtons").style.display = "block";
+  next();
+}
+
+function next() {
+  const gameTitle = document.getElementById("gameTitle");
+  const gameContent = document.getElementById("gameContent");
+  gameContent.innerHTML = "";
+
+  if (currentMode === "choice") {
+    gameTitle.textContent = "兩難選擇";
+    const q = choiceQuestions[Math.floor(Math.random() * choiceQuestions.length)];
+    currentOptions = q;
+    q.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.textContent = opt;
+      btn.onclick = () => btn.style.backgroundColor = "#ccc";
+      gameContent.appendChild(btn);
+    });
+  } else if (currentMode === "mouqi") {
+    gameTitle.textContent = "默契問答";
+    const q = mouqiQuestions[Math.floor(Math.random() * mouqiQuestions.length)];
+    gameContent.innerHTML = `<p><strong>題目：</strong>${q}</p><p>3 秒倒數後一起喊出答案！</p>`;
+  }
+}
+
+function reset() {
+  document.getElementById("gameTitle").textContent = "請選擇遊戲模式";
+  document.getElementById("gameContent").innerHTML = "";
+  document.getElementById("actionButtons").style.display = "none";
+}
+</script>
+
+</body>
+</html>
+"""
+
+# 儲存整合檔案
+integrated_file_path = "/mnt/data/情侶互動遊戲_整合版.html"
+with open(integrated_file_path, "w", encoding="utf-8") as f:
+    f.write(integrated_html)
+
+integrated_file_path
